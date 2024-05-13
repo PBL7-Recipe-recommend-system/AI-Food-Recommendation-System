@@ -1,0 +1,8 @@
+data.csv filter=lfs diff=lfs merge=lfs -text
+ingredients.csv filter=lfs diff=lfs merge=lfs -text
+recipes.csv filter=lfs diff=lfs merge=lfs -text
+/ filter=lfs diff=lfs merge=lfs -text
+reciews.csv filter=lfs diff=lfs merge=lfs -text
+AI-Food-Recommendation-System/training/data/dataset.csv filter=lfs diff=lfs merge=lfs -text
+AI-Food-Recommendation-System/training/data/recipes.csv filter=lfs diff=lfs merge=lfs -text
+AI-Food-Recommendation-System/training/data/reviews.csv filter=lfs diff=lfs merge=lfs -text
