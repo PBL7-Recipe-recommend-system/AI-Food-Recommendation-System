@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import re
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
@@ -59,7 +60,7 @@ def output_recommended_recipes(dataframe):
         for recipe in output:
             recipe['RecipeIngredientParts']=extract_quoted_strings(recipe['RecipeIngredientParts'])
             recipe['RecipeInstructions']=extract_quoted_strings(recipe['RecipeInstructions'])
+            # recipe['Images']=extract_quoted_strings(recipe['Images'])
     else:
         output=None
     return output
-
