@@ -153,7 +153,7 @@ class Display:
             with breakfast_column:
                 breakfast_choice=st.selectbox(f'Choose your breakfast:',[recipe['Name'] for recipe in recommendations[0]])
             with launch_column:
-                launch_choice=st.selectbox(f'Choose your launch:',[recipe['Name'] for recipe in recommendations[1]])
+                launch_choice=st.selectbox(f'Choose your lunch:',[recipe['Name'] for recipe in recommendations[1]])
             with dinner_column:
                 dinner_choice=st.selectbox(f'Choose your dinner:',[recipe['Name'] for recipe in recommendations[2]])  
             choices=[breakfast_choice,launch_choice,dinner_choice]     

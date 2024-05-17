@@ -8,7 +8,7 @@ from Generate_Recommendations import Generator
 from ImageFinder.ImageFinder import get_images_links as find_image
 from typing import Dict
 
-dataset=pd.read_csv('../Data/dataset.csv', compression='gzip')
+dataset=pd.read_csv('../Data/dataset_unzip.csv')
 
 app = FastAPI()
 
@@ -113,13 +113,13 @@ class Person:
                 recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
             recommendation_dataframe=recommend(dataset,recommended_nutrition,[],{'n_neighbors':5,'return_distance':False})
             output.append(output_recommended_recipes(recommendation_dataframe))
-        # for recommendation in output:
-        #     for recipe in recommendation:
-        #         recipe['image_link']=find_image(recipe['Name']) 
+        for recommendation in output:
+            for recipe in recommendation:
+                recipe['images']=find_image(recipe['Name']) 
         if output is None:
-            return {"output":None}
+            return {"data":None}
         else:
-            return {"output":output}
+            return {"data":output}
 @app.get("/")
 def home():
     return {"health_check": "OK"}
@@ -130,9 +130,9 @@ def update_item(prediction_input:PredictionIn):
     recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.ingredients,prediction_input.params.dict())
     output=output_recommended_recipes(recommendation_dataframe)
     if output is None:
-        return {"output":None}
+        return {"data":None}
     else:
-        return {"output":output}
+        return {"data":output}
     
 @app.post("/recommend/")
 def recommendation(person: PersonIn):
