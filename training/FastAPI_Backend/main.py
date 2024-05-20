@@ -1,8 +1,8 @@
 from fastapi import FastAPI # type: ignore
-from pydantic import BaseModel,conlist # type: ignore
+from pydantic import BaseModel,conlist,Field # type: ignore
 from typing import List,Optional
 import pandas as pd # type: ignore
-from model import recommend,output_recommended_recipes
+from model import recommend,output_recommended_recipes, extract_data
 from random import uniform as rnd
 from Generate_Recommendations import Generator
 from ImageFinder.ImageFinder import get_images_links as find_image
@@ -20,8 +20,10 @@ class PersonIn(BaseModel):
     weight: float
     gender: str
     activity: str
-    meals_calories_perc: Dict[str, float]
-    weight_loss: float
+    mealsCaloriesPerc: Dict[str, float]
+    weightLoss: float
+    includeIngredients: List[str] = Field(default_factory=list)
+    excludeIngredients: List[str] = Field(default_factory=list)
 
 class params(BaseModel):
     n_neighbors:int=5
@@ -29,7 +31,8 @@ class params(BaseModel):
 
 class PredictionIn(BaseModel):
     nutrition_input:conlist(float, min_items=9, max_items=9) # type: ignore
-    ingredients:list[str]=[]
+    includeIngredients:list[str]=[]
+    excludeIngredients:list[str]=[]
     params:Optional[params]
 
 
@@ -50,19 +53,22 @@ class Recipe(BaseModel):
     proteinContent:float
     recipeInstructions:list[str]
     images:list[str]
+    
 
 class PredictionOut(BaseModel):
     output: Optional[List[Recipe]] = None
 
 class Person:
-    def __init__(self,age,height,weight,gender,activity,meals_calories_perc,weight_loss):
+    def __init__(self,age,height,weight,gender,activity,mealsCaloriesPerc,weightLoss,includeIngredients, excludeIngredients):
         self.age=age
         self.height=height
         self.weight=weight
         self.gender=gender
         self.activity=activity
-        self.meals_calories_perc=meals_calories_perc
-        self.weight_loss=weight_loss
+        self.mealsCaloriesPerc=mealsCaloriesPerc
+        self.weightLoss=weightLoss
+        self.includeIngredients=includeIngredients
+        self.excludeIngredients=excludeIngredients
     def calculate_bmi(self,):
         bmi=round(self.weight/((self.height/100)**2),2)
         return bmi
@@ -99,10 +105,11 @@ class Person:
         return maintain_calories
 
     def generate_recommendations(self,):
-        total_calories=self.weight_loss*self.calories_calculator()
+        total_calories=self.weightLoss*self.calories_calculator()
         output=[]
-        for meal in self.meals_calories_perc:
-            meal_calories=self.meals_calories_perc[meal]*total_calories
+        extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
+        for meal in self.mealsCaloriesPerc:
+            meal_calories=self.mealsCaloriesPerc[meal]*total_calories
             if meal=='breakfast':        
                 recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
             elif meal=='lunch':
@@ -111,15 +118,15 @@ class Person:
                 recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)] 
             else:
                 recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
-            recommendation_dataframe=recommend(dataset,recommended_nutrition,[],{'n_neighbors':5,'return_distance':False})
+            recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
             output.append(output_recommended_recipes(recommendation_dataframe))
-        for recommendation in output:
-            for recipe in recommendation:
-                recipe['images']=find_image(recipe['Name']) 
-        if output is None:
-            return {"data":None}
+        # for recommendation in output:
+        #     for recipe in recommendation:
+        #         recipe['images']=find_image(recipe['Name']) 
+        if not output:
+            return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
-            return {"data":output}
+            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": total_calories,"bmi":self.calculate_bmi(), "recommendations": output}}
 @app.get("/")
 def home():
     return {"health_check": "OK"}
@@ -127,7 +134,7 @@ def home():
 
 @app.post("/predict/",response_model=PredictionOut)
 def update_item(prediction_input:PredictionIn):
-    recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.ingredients,prediction_input.params.dict())
+    recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.includeIngredients, prediction_input.excludeIngredients,prediction_input.params.dict())
     output=output_recommended_recipes(recommendation_dataframe)
     if output is None:
         return {"data":None}
@@ -143,8 +150,10 @@ def recommendation(person: PersonIn):
         weight=person.weight,
         gender=person.gender,
         activity=person.activity,
-        meals_calories_perc=person.meals_calories_perc,
-        weight_loss=person.weight_loss
+        mealsCaloriesPerc=person.mealsCaloriesPerc,
+        weightLoss=person.weightLoss,
+        includeIngredients=person.includeIngredients,
+        excludeIngredients=person.excludeIngredients
     )
     
     recommendations = person_obj.generate_recommendations()
