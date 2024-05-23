@@ -38,20 +38,8 @@ class PredictionIn(BaseModel):
 
 class Recipe(BaseModel):
     name:str
-    cookTime:str
-    prepTime:str
     totalTime:str
-    recipeIngredientsParts:list[str]
     calories:float
-    fatContent:float
-    saturatedFatContent:float
-    cholesterolContent:float
-    sodiumContent:float
-    carbohydrateContent:float
-    fiberContent:float
-    sugarContent:float
-    proteinContent:float
-    recipeInstructions:list[str]
     images:list[str]
     
 
@@ -105,7 +93,8 @@ class Person:
         return maintain_calories
 
     def generate_recommendations(self,):
-        total_calories=self.weightLoss*self.calories_calculator()
+        weight_loss_factors = {1: 0.8, 2: 1.2, 3: 1}
+        total_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
         output=[]
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
         for meal in self.mealsCaloriesPerc:
@@ -126,7 +115,7 @@ class Person:
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
-            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": total_calories,"bmi":self.calculate_bmi(), "recommendations": output}}
+            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(total_calories),"bmi":self.calculate_bmi(), "recommendations": output}}
 @app.get("/")
 def home():
     return {"health_check": "OK"}
