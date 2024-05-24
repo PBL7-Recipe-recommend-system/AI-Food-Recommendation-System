@@ -7,8 +7,28 @@ from random import uniform as rnd
 from Generate_Recommendations import Generator
 from ImageFinder.ImageFinder import get_images_links as find_image
 from typing import Dict
+import pymysql.cursors
+import pandas as pd
+import datetime
 
-dataset=pd.read_csv('../Data/updated_dataset.csv')
+cnx = pymysql.connect(host='127.0.0.1',
+                             user='root',
+                             password='admin123',
+                             db='food_recommendation_db',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
+
+try:
+    with cnx.cursor() as cursor:
+        sql = "SELECT * FROM food_recipe"
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+finally:
+    cnx.close()
+
+columns_to_keep = ['recipe_id', 'name', 'cook_time', 'prep_time','images', 'total_time', 'recipe_ingredient_parts', 'calories', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content', 'recipe_instructions']
+dataset = pd.DataFrame(rows, columns=columns_to_keep)
+# dataset=pd.read_csv('../Data/updated_dataset.csv')
 
 app = FastAPI()
 
@@ -91,13 +111,16 @@ class Person:
         maintain_calories = self.calculate_bmr()*weight
         return maintain_calories
 
+    
+
     def generate_recommendations(self, day_count):
         weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
         total_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
-        output=[]
+        output={}
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
-        for _ in range(day_count):
-            daily_output = []
+        for i in range(day_count):
+            daily_output = {'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
+            date = (datetime.datetime.now() + datetime.timedelta(days=i)).strftime('%Y-%m-%d')
             for meal in self.mealsCaloriesPerc:
                 meal_calories=self.mealsCaloriesPerc[meal]*total_calories
                 if meal=='breakfast':        
@@ -109,8 +132,8 @@ class Person:
                 else:
                     recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
                 recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
-                daily_output.append(output_recommended_recipes(recommendation_dataframe))
-            output.append(daily_output)
+                daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
+            output[date] = daily_output
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
@@ -130,7 +153,7 @@ def home():
 #         return {"data":output}
     
 @app.post("/recommend")
-def recommendation(person: PersonIn):
+def recommendation(person: PersonIn,dayCount:int=1):
 
     person_obj = Person(
         age=person.age,
@@ -144,7 +167,7 @@ def recommendation(person: PersonIn):
         excludeIngredients=person.excludeIngredients
     )
     
-    recommendations = person_obj.generate_recommendations(7)
+    recommendations = person_obj.generate_recommendations(dayCount)
 
     if recommendations is None:
         return None

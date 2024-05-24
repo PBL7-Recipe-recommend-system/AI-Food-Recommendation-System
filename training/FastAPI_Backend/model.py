@@ -10,8 +10,9 @@ import logging
 
 
 def scaling(dataframe):
+    columns_to_scale = ['calories', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content']
     scaler=StandardScaler()
-    prep_data=scaler.fit_transform(dataframe.iloc[:,6:15].to_numpy())
+    prep_data=scaler.fit_transform(dataframe[columns_to_scale].to_numpy())
     return prep_data,scaler
 
 def nn_predictor(prep_data):
@@ -41,11 +42,11 @@ def extract_ingredient_filtered_data(dataframe, include_ingredients, exclude_ing
     
     if include_ingredients:
         include_regex_string = ''.join(map(lambda x: f'(?=.*{x})', include_ingredients))
-        extracted_data = extracted_data[extracted_data['RecipeIngredientParts'].str.contains(include_regex_string, regex=True, flags=re.IGNORECASE)]
+        extracted_data = extracted_data[extracted_data['recipe_ingredient_parts'].str.contains(include_regex_string, regex=True, flags=re.IGNORECASE)]
     
     if exclude_ingredients:
         exclude_regex_string = ''.join(map(lambda x: f'(?=.*{x})', exclude_ingredients))
-        extracted_data = extracted_data[~extracted_data['RecipeIngredientParts'].str.contains(exclude_regex_string, regex=True, flags=re.IGNORECASE)]
+        extracted_data = extracted_data[~extracted_data['recipe_ingredient_parts'].str.contains(exclude_regex_string, regex=True, flags=re.IGNORECASE)]
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Execution time of extract_ingredient_filtered_data function: {elapsed_time} seconds")
@@ -77,9 +78,11 @@ def extract_quoted_strings(s):
 
 def output_recommended_recipes(dataframe):
     if dataframe is not None:
-        columns_to_drop = ['CookTime', 'PrepTime', 'RecipeIngredientParts', 'FatContent', 'SaturatedFatContent', 'CholesterolContent', 'SodiumContent', 'CarbohydrateContent', 'FiberContent', 'SugarContent', 'ProteinContent','RecipeInstructions']
+        columns_to_drop = ['cook_time', 'prep_time', 'recipe_ingredient_parts', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content','recipe_instructions']
         output = dataframe.drop(columns=columns_to_drop).copy()
-        output.columns = [col[0].lower() + col[1:] for col in output.columns]
+        output.columns = [col[0].lower() + col.title().replace('_', '')[1:] for col in output.columns]
+        output['images'] = output['images'].apply(split_string_to_list)
+        output['totalTime'] = output['totalTime'].apply(process_time)
         output = output.to_dict("records")
         # for recipe in output:
         #     recipe['RecipeIngredientParts']=extract_quoted_strings(recipe['RecipeIngredientParts'])
@@ -88,3 +91,21 @@ def output_recommended_recipes(dataframe):
     else:
         output=None
     return output
+
+def split_string_to_list(input):
+    if input is None:
+        return []
+    if not input.startswith("c"):
+        return [input.strip('"')]
+    input = input[3:-1]
+    items = input.split(", ")
+    for i in range(len(items)):
+        items[i] = items[i].strip('"').replace("\\", "").replace("\n", "").replace('\\"', '')
+    return items
+
+def process_time(time):
+    if time is None:
+        return ""
+    if time.startswith("PT"):
+        return time.replace("PT", "", 1)
+    return time
