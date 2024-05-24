@@ -121,7 +121,7 @@ def home():
     return {"health_check": "OK"}
 
 
-@app.post("/predict/",response_model=PredictionOut)
+@app.post("/predict",response_model=PredictionOut)
 def update_item(prediction_input:PredictionIn):
     recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.includeIngredients, prediction_input.excludeIngredients,prediction_input.params.dict())
     output=output_recommended_recipes(recommendation_dataframe)
@@ -130,7 +130,7 @@ def update_item(prediction_input:PredictionIn):
     else:
         return {"data":output}
     
-@app.post("/recommend/")
+@app.post("/recommend")
 def recommendation(person: PersonIn):
 
     person_obj = Person(
