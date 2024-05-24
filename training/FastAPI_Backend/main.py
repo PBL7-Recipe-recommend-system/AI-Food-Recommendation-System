@@ -8,10 +8,9 @@ from Generate_Recommendations import Generator
 from ImageFinder.ImageFinder import get_images_links as find_image
 from typing import Dict
 
-dataset=pd.read_csv('../Data/dataset_unzip.csv')
+dataset=pd.read_csv('../Data/updated_dataset.csv')
 
 app = FastAPI()
-
 
 
 class PersonIn(BaseModel):
