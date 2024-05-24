@@ -92,26 +92,26 @@ class Person:
         maintain_calories = self.calculate_bmr()*weight
         return maintain_calories
 
-    def generate_recommendations(self,):
-        weight_loss_factors = {1: 0.8, 2: 1.2, 3: 1}
+    def generate_recommendations(self, day_count):
+        weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
         total_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
         output=[]
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
-        for meal in self.mealsCaloriesPerc:
-            meal_calories=self.mealsCaloriesPerc[meal]*total_calories
-            if meal=='breakfast':        
-                recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
-            elif meal=='lunch':
-                recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)]
-            elif meal=='dinner':
-                recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)] 
-            else:
-                recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
-            recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
-            output.append(output_recommended_recipes(recommendation_dataframe))
-        # for recommendation in output:
-        #     for recipe in recommendation:
-        #         recipe['images']=find_image(recipe['Name']) 
+        for _ in range(day_count):
+            daily_output = []
+            for meal in self.mealsCaloriesPerc:
+                meal_calories=self.mealsCaloriesPerc[meal]*total_calories
+                if meal=='breakfast':        
+                    recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
+                elif meal=='lunch':
+                    recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)]
+                elif meal=='dinner':
+                    recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)] 
+                else:
+                    recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
+                recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
+                daily_output.append(output_recommended_recipes(recommendation_dataframe))
+            output.append(daily_output)
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
@@ -121,14 +121,14 @@ def home():
     return {"health_check": "OK"}
 
 
-@app.post("/predict",response_model=PredictionOut)
-def update_item(prediction_input:PredictionIn):
-    recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.includeIngredients, prediction_input.excludeIngredients,prediction_input.params.dict())
-    output=output_recommended_recipes(recommendation_dataframe)
-    if output is None:
-        return {"data":None}
-    else:
-        return {"data":output}
+# @app.post("/predict",response_model=PredictionOut)
+# def update_item(prediction_input:PredictionIn):
+#     recommendation_dataframe=recommend(dataset,prediction_input.nutrition_input,prediction_input.includeIngredients, prediction_input.excludeIngredients,prediction_input.params.dict())
+#     output=output_recommended_recipes(recommendation_dataframe)
+#     if output is None:
+#         return {"data":None}
+#     else:
+#         return {"data":output}
     
 @app.post("/recommend")
 def recommendation(person: PersonIn):
@@ -145,7 +145,7 @@ def recommendation(person: PersonIn):
         excludeIngredients=person.excludeIngredients
     )
     
-    recommendations = person_obj.generate_recommendations()
+    recommendations = person_obj.generate_recommendations(7)
 
     if recommendations is None:
         return None

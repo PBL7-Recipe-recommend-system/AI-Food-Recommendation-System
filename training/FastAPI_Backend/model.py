@@ -79,6 +79,7 @@ def output_recommended_recipes(dataframe):
     if dataframe is not None:
         columns_to_drop = ['CookTime', 'PrepTime', 'RecipeIngredientParts', 'FatContent', 'SaturatedFatContent', 'CholesterolContent', 'SodiumContent', 'CarbohydrateContent', 'FiberContent', 'SugarContent', 'ProteinContent','RecipeInstructions']
         output = dataframe.drop(columns=columns_to_drop).copy()
+        output.columns = [col[0].lower() + col[1:] for col in output.columns]
         output = output.to_dict("records")
         # for recipe in output:
         #     recipe['RecipeIngredientParts']=extract_quoted_strings(recipe['RecipeIngredientParts'])
