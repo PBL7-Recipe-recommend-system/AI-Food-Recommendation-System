@@ -11,12 +11,9 @@ import pymysql.cursors
 import pandas as pd
 import datetime
 
-cnx = pymysql.connect(host='127.0.0.1',
-                             user='root',
-                             password='admin123',
-                             db='food_recommendation_db',
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+from db_config import db_config
+
+cnx = pymysql.connect(**db_config)
 
 try:
     with cnx.cursor() as cursor:
@@ -116,7 +113,7 @@ class Person:
     def generate_recommendations(self, day_count):
         weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
         total_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
-        output={}
+        output=[]
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
         for i in range(day_count):
             daily_output = {'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
@@ -133,7 +130,7 @@ class Person:
                     recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
                 recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
                 daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
-            output[date] = daily_output
+            output.append({"date": date, "meals": daily_output})
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:

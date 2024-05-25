@@ -61,11 +61,11 @@ def recommend(dataframe,_input,include_ingredients=[], exclude_ingredients=[],pa
         extracted_data=extract_data(dataframe,include_ingredients, exclude_ingredients)
         start_time = time.time()
         if extracted_data.shape[0]>=params['n_neighbors']:
-            print(f"1")
+            
             prep_data,scaler=scaling(extracted_data)
             neigh=nn_predictor(prep_data)
             pipeline=build_pipeline(neigh,scaler,params)
-            print(f"2")
+        
             return apply_pipeline(pipeline,_input,extracted_data)
         else:
             return None
