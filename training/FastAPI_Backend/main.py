@@ -117,7 +117,7 @@ class Person:
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
         for i in range(day_count):
             daily_output = {'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
-            date = (datetime.datetime.now() + datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+            date = (datetime.datetime.now() + datetime.timedelta(days=i)).strftime('%d-%m-%Y')
             for meal in self.mealsCaloriesPerc:
                 meal_calories=self.mealsCaloriesPerc[meal]*total_calories
                 if meal=='breakfast':        
