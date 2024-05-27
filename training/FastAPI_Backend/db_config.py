@@ -4,6 +4,7 @@ db_config = {
     'user': 'root',
     'password': 'admin123',
     'db': 'food_recommendation_db',
+    'port': 3306,
     'charset': 'utf8mb4',
     'cursorclass': pymysql.cursors.DictCursor
 }

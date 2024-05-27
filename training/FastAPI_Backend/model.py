@@ -49,7 +49,7 @@ def extract_ingredient_filtered_data(dataframe, include_ingredients, exclude_ing
         extracted_data = extracted_data[~extracted_data['recipe_ingredients_parts'].str.contains(exclude_regex_string, regex=True, flags=re.IGNORECASE)]
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Execution time of extract_ingredient_filtered_data function: {elapsed_time} seconds")
+    # print(f"Execution time of extract_ingredient_filtered_data function: {elapsed_time} seconds")
     return extracted_data
 
 def apply_pipeline(pipeline,_input,extracted_data):
