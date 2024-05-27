@@ -120,7 +120,7 @@ class Person:
 
     def generate_recommendations(self, day_count):
         weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
-        total_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
+        daily_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
         output=[]
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
         for i in range(day_count):
@@ -128,7 +128,7 @@ class Person:
             date = (datetime.datetime.now() + datetime.timedelta(days=i)).strftime('%d-%m-%Y')
             daily_output["date"] = date
             for meal in self.mealsCaloriesPerc:
-                meal_calories=self.mealsCaloriesPerc[meal]*total_calories
+                meal_calories=self.mealsCaloriesPerc[meal]*daily_calories
                 if meal=='breakfast':        
                     recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
                 elif meal=='lunch':
@@ -141,11 +141,11 @@ class Person:
                 daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
             
             output.append(daily_output)
-        # save_recommendations(self.user_id, output, total_calories)
+        save_recommendations(self.user_id, output, daily_calories)
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
-            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(total_calories),"bmi":self.calculate_bmi(), "recommendations": output}}
+            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories),"bmi":self.calculate_bmi(), "recommendations": output}}
 @app.get("/")
 def home():
     return {"health_check": "OK"}
