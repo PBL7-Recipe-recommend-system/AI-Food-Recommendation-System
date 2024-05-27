@@ -42,11 +42,11 @@ def extract_ingredient_filtered_data(dataframe, include_ingredients, exclude_ing
     
     if include_ingredients:
         include_regex_string = ''.join(map(lambda x: f'(?=.*{x})', include_ingredients))
-        extracted_data = extracted_data[extracted_data['recipe_ingredient_parts'].str.contains(include_regex_string, regex=True, flags=re.IGNORECASE)]
+        extracted_data = extracted_data[extracted_data['recipe_ingredients_parts'].str.contains(include_regex_string, regex=True, flags=re.IGNORECASE)]
     
     if exclude_ingredients:
         exclude_regex_string = ''.join(map(lambda x: f'(?=.*{x})', exclude_ingredients))
-        extracted_data = extracted_data[~extracted_data['recipe_ingredient_parts'].str.contains(exclude_regex_string, regex=True, flags=re.IGNORECASE)]
+        extracted_data = extracted_data[~extracted_data['recipe_ingredients_parts'].str.contains(exclude_regex_string, regex=True, flags=re.IGNORECASE)]
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Execution time of extract_ingredient_filtered_data function: {elapsed_time} seconds")
@@ -78,7 +78,7 @@ def extract_quoted_strings(s):
 
 def output_recommended_recipes(dataframe):
     if dataframe is not None:
-        columns_to_drop = ['cook_time', 'prep_time', 'recipe_ingredient_parts', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content','recipe_instructions']
+        columns_to_drop = ['cook_time', 'prep_time', 'recipe_ingredients_parts', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content','recipe_instructions']
         output = dataframe.drop(columns=columns_to_drop).copy()
         output.columns = [col[0].lower() + col.title().replace('_', '')[1:] for col in output.columns]
         output['images'] = output['images'].apply(split_string_to_list)
