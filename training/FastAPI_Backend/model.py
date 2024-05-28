@@ -56,17 +56,17 @@ def apply_pipeline(pipeline,_input,extracted_data):
     _input=np.array(_input).reshape(1,-1)
     return extracted_data.iloc[pipeline.transform(_input)[0]]
 
-def recommend(dataframe,_input,include_ingredients=[], exclude_ingredients=[],params={'n_neighbors':5,'return_distance':False}):
+def recommend(dataframe,_input,params={'n_neighbors':5,'return_distance':False}):
         
-        extracted_data=extract_data(dataframe,include_ingredients, exclude_ingredients)
+        # extracted_data=extract_data(dataframe,include_ingredients, exclude_ingredients)
         start_time = time.time()
-        if extracted_data.shape[0]>=params['n_neighbors']:
+        if dataframe.shape[0]>=params['n_neighbors']:
             
-            prep_data,scaler=scaling(extracted_data)
+            prep_data,scaler=scaling(dataframe)
             neigh=nn_predictor(prep_data)
             pipeline=build_pipeline(neigh,scaler,params)
         
-            return apply_pipeline(pipeline,_input,extracted_data)
+            return apply_pipeline(pipeline,_input,dataframe)
         else:
             return None
 

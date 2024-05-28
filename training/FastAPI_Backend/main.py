@@ -148,54 +148,112 @@ class Person:
         else:
             return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories),"bmi":self.calculate_bmi(), "recommendations": output}}
         
+    # def generate_recommendations2(self):
+    #     weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
+    #     daily_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
+    #     output=[]
+    #     extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
+    
+    #     engine = create_engine(DATABASE_URL)
+    #     Session = sessionmaker(bind=engine)
+    #     session = Session()
+        
+    #     meal_plans = session.query(RecommendMealPlan).filter(RecommendMealPlan.date >= datetime.datetime.now()).order_by(RecommendMealPlan.date.desc()).all()
+        
+    #     # Find the latest date in meal_plans
+    #     latest_date = meal_plans[0].date if meal_plans else datetime.datetime.now() - datetime.timedelta(days=1)
+        
+    #     # Generate recommendations from the next day until 7 days later
+    #     for i in range(1, 8):
+    #         date = (latest_date + datetime.timedelta(days=i)).strftime('%d-%m-%Y')
+            
+    #         # Check if data is available for this date
+    #         meal_plan = next((mp for mp in meal_plans if mp.date.strftime('%d-%m-%Y') == date), None)
+            
+    #         if meal_plan is None:
+    #             # Data is not available for this date, generate recommendations
+    #             daily_output = {'date': date,'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
+    #             for meal in self.mealsCaloriesPerc:
+    #                 meal_calories=self.mealsCaloriesPerc[meal]*daily_calories
+    #                 if meal=='breakfast':        
+    #                     recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
+    #                 elif meal=='lunch':
+    #                     recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)]
+    #                 elif meal=='dinner':
+    #                     recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)] 
+    #                 else:
+    #                     recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
+    #                 recommendation_dataframe=recommend(extracted_data,recommended_nutrition,{'n_neighbors':5,'return_distance':False})
+    #                 daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
+                
+    #             output.append(daily_output)
+    #         else:
+    #             # Data is available for this date, use it
+    #             output.append(meal_plan)
+        
+    #     save_recommendations(self.user_id, output, daily_calories)
+    #     if not output:
+    #         return {"statusCode": 401, "message": "No recommendations generated", "data": None}
+    #     else:
+    #         return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories),"bmi":self.calculate_bmi(), "recommendations": output}} 
+
     def generate_recommendations2(self):
         weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
         daily_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
-        output=[]
+        output = []
         extracted_data = extract_data(dataset, self.includeIngredients, self.excludeIngredients)
-    
+        
         engine = create_engine(DATABASE_URL)
         Session = sessionmaker(bind=engine)
         session = Session()
         
-        meal_plans = session.query(RecommendMealPlan).filter(RecommendMealPlan.date >= datetime.datetime.now()).order_by(RecommendMealPlan.date.desc()).all()
+        today = datetime.datetime.now().date()
+        seven_days_later = today + datetime.timedelta(days=7)
         
-        # Find the latest date in meal_plans
-        latest_date = meal_plans[0].date if meal_plans else datetime.datetime.now() - datetime.timedelta(days=1)
+        # Fetch existing meal plans within the next 7 days
+        meal_plans = session.query(RecommendMealPlan).filter(
+            RecommendMealPlan.date >= today,
+            RecommendMealPlan.date <= seven_days_later
+        ).order_by(RecommendMealPlan.date).all()
+
+        existing_dates = {meal_plan.date for meal_plan in meal_plans}  # Create a set of existing dates
         
-        # Generate recommendations from the next day until 7 days later
-        for i in range(1, 8):
-            date = (latest_date + datetime.timedelta(days=i)).strftime('%d-%m-%Y')
+        # Generate recommendations from today to 7 days later
+        for i in range(8):  # Includes today and goes to 7 days later
+            date = today + datetime.timedelta(days=i)
             
             # Check if data is available for this date
-            meal_plan = next((mp for mp in meal_plans if mp.date.strftime('%d-%m-%Y') == date), None)
-            
-            if meal_plan is None:
+            if date not in existing_dates:
                 # Data is not available for this date, generate recommendations
-                daily_output = {'date': date,'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
+                daily_output = {'date': date.strftime('%d-%m-%Y'), 'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
                 for meal in self.mealsCaloriesPerc:
-                    meal_calories=self.mealsCaloriesPerc[meal]*daily_calories
-                    if meal=='breakfast':        
-                        recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
-                    elif meal=='lunch':
-                        recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)]
-                    elif meal=='dinner':
-                        recommended_nutrition = [meal_calories,rnd(20,40),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,20),rnd(0,10),rnd(50,175)] 
-                    else:
-                        recommended_nutrition = [meal_calories,rnd(10,30),rnd(0,4),rnd(0,30),rnd(0,400),rnd(40,75),rnd(4,10),rnd(0,10),rnd(30,100)]
-                    recommendation_dataframe=recommend(extracted_data,recommended_nutrition,[],[],{'n_neighbors':5,'return_distance':False})
+                    meal_calories = self.mealsCaloriesPerc[meal] * daily_calories
+                    if meal == 'breakfast':        
+                        recommended_nutrition = [meal_calories, rnd(10,30), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,10), rnd(0,10), rnd(30,100)]
+                    elif meal == 'lunch':
+                        recommended_nutrition = [meal_calories, rnd(20,40), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,20), rnd(0,10), rnd(50,175)]
+                    elif meal == 'dinner':
+                        recommended_nutrition = [meal_calories, rnd(20,40), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,20), rnd(0,10), rnd(50,175)] 
+                    else:  # Treat all other meals similarly to breakfast
+                        recommended_nutrition = [meal_calories, rnd(10,30), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,10), rnd(0,10), rnd(30,100)]
+                    recommendation_dataframe = recommend(extracted_data, recommended_nutrition, {'n_neighbors':5, 'return_distance':False})
                     daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
                 
                 output.append(daily_output)
             else:
-                # Data is available for this date, use it
+                # Use the existing data for this date
+                meal_plan = next(mp for mp in meal_plans if mp.date == date)
                 output.append(meal_plan)
         
         save_recommendations(self.user_id, output, daily_calories)
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
-            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories),"bmi":self.calculate_bmi(), "recommendations": output}}    
+            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories), "bmi": self.calculate_bmi(), "recommendations": output}}    
+
+
+
+   
 @app.get("/")
 def home():
     return {"health_check": "OK"}
