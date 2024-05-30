@@ -30,11 +30,6 @@ def extract_data(dataframe,include_ingredients, exclude_ingredients):
     extracted_data=extract_ingredient_filtered_data(extracted_data,include_ingredients, exclude_ingredients)
     return extracted_data
     
-# def extract_ingredient_filtered_data(dataframe,ingredients):
-#     extracted_data=dataframe.copy()
-#     regex_string=''.join(map(lambda x:f'(?=.*{x})',ingredients))
-#     extracted_data = extracted_data[~extracted_data['RecipeIngredientParts'].str.contains(regex_string, regex=True, flags=re.IGNORECASE)]
-#     return extracted_data
 
 def extract_ingredient_filtered_data(dataframe, include_ingredients, exclude_ingredients):
     start_time = time.time()
@@ -56,17 +51,17 @@ def apply_pipeline(pipeline,_input,extracted_data):
     _input=np.array(_input).reshape(1,-1)
     return extracted_data.iloc[pipeline.transform(_input)[0]]
 
-def recommend(dataframe,_input,params={'n_neighbors':5,'return_distance':False}):
+def recommend(dataframe,_input,include_ingredients, exclude_ingredients,params={'n_neighbors':5,'return_distance':False}):
         
-        # extracted_data=extract_data(dataframe,include_ingredients, exclude_ingredients)
-        start_time = time.time()
+        extracted_data=extract_data(dataframe,include_ingredients, exclude_ingredients)
+        
         if dataframe.shape[0]>=params['n_neighbors']:
             
-            prep_data,scaler=scaling(dataframe)
+            prep_data,scaler=scaling(extracted_data)
             neigh=nn_predictor(prep_data)
             pipeline=build_pipeline(neigh,scaler,params)
         
-            return apply_pipeline(pipeline,_input,dataframe)
+            return apply_pipeline(pipeline,_input,extracted_data)
         else:
             return None
 
