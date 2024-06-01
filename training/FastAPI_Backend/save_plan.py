@@ -58,7 +58,7 @@ class RecommendMealPlan(Base):
     recommend_meal_plan_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('user.user_id'), nullable=False)
     date = Column(Date, nullable=False)
-    daily_calorie = Column(Integer)
+    daily_calories = Column(Integer)
     description = Column(String(255))
 
     recipes = relationship('RecommendMealPlanRecipes', back_populates='meal_plan')
@@ -164,7 +164,7 @@ def save_recommendations(user_id, output, daily_calories):
                     meal_plan = RecommendMealPlan(
                         user_id=user_id,
                         date=date,
-                        daily_calorie=daily_calories,
+                        daily_calories=daily_calories,
                         description="Generated meal plan"
                     )
                     session.add(meal_plan)
