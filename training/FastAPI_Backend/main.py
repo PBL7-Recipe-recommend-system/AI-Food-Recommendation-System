@@ -8,13 +8,17 @@ from Generate_Recommendations import Generator
 from ImageFinder.ImageFinder import get_images_links as find_image
 from typing import Dict
 import pymysql.cursors
-import pandas as pd
+from pandas import DataFrame
 import datetime
 from sqlalchemy import Column, Integer, String, Date, Boolean, Enum, ForeignKey, create_engine
-from sqlalchemy.orm import relationship,sessionmaker
+from sqlalchemy.orm import relationship,sessionmaker,class_mapper
 from sqlalchemy.ext.declarative import declarative_base
-from save_plan import save_recommendations, RecommendMealPlan, User
+from save_plan import save_recommendations, RecommendMealPlan, User, FoodRecipe, RecommendMealPlanRecipes
 
+
+def object_as_dict(obj):
+    return {c.key: getattr(obj, c.key)
+            for c in class_mapper(obj.__class__).columns}
 
 from db_config import db_config
 
@@ -197,8 +201,23 @@ class Person:
                 output.append(daily_output)
             else:
                 # Use the existing data for this date
-                meal_plan = next(mp for mp in meal_plans if mp.date == date)
-                output.append(meal_plan)
+                meal_plan = session.query(RecommendMealPlan).filter(RecommendMealPlan.date == date, RecommendMealPlan.user_id == self.user_id).first()
+                if meal_plan:
+                    daily_output = {'date': date.strftime('%d-%m-%Y'), 'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
+                    for meal in self.mealsCaloriesPerc:
+                        recipes = session.query(FoodRecipe).join(RecommendMealPlanRecipes, FoodRecipe.recipe_id == RecommendMealPlanRecipes.recipe_id).filter(RecommendMealPlanRecipes.recommend_meal_plan_id == meal_plan.recommend_meal_plan_id, RecommendMealPlanRecipes.meal_type == meal).all()
+                        
+                        # Convert the SQLAlchemy ORM objects to dictionaries
+                        recipes = [object_as_dict(r) for r in recipes]
+                        
+                        df = DataFrame(recipes)
+                        df = df.drop(columns=["keywords", "recipe_ingredients_quantities", "recipe_servings", "review_count"])
+                        cleaned_data = output_recommended_recipes(df)
+                        
+                        daily_output[meal] = cleaned_data
+                    output.append(daily_output)
+                else:
+                    output.append(None)
         
         save_recommendations(self.user_id, output, daily_calories)
         if not output:
