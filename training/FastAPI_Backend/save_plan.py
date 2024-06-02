@@ -154,9 +154,7 @@ def save_recommendations(user_id, output, daily_calories):
     try:
         session = Session()
         for daily_output in output:
-            # Check if the daily_output is a dictionary (new recommendation) or an instance of RecommendMealPlan (existing plan)
             if isinstance(daily_output, dict):
-                # Handling new recommendations
                 date = datetime.strptime(daily_output['date'], '%d-%m-%Y').strftime('%Y-%m-%d')
                 meal_plan = session.query(RecommendMealPlan).filter_by(user_id=user_id, date=date).first()
                 
@@ -171,10 +169,11 @@ def save_recommendations(user_id, output, daily_calories):
                     session.commit()
 
                 for meal, recipes in daily_output.items():
-                    if meal != 'date':  # Excluding 'date' key which is not a meal type
+                    if meal != 'date':
                         for recipe in recipes:
                             meal_plan_recipe = session.query(RecommendMealPlanRecipes).filter_by(
-                                recommend_meal_plan_id=meal_plan.recommend_meal_plan_id,  # Assuming meal_plan has an 'id' attribute
+                                recommend_meal_plan_id=meal_plan.recommend_meal_plan_id,
+                                recipe_id=recipe['recipeId'],
                                 meal_type=meal
                             ).first()
 
@@ -187,11 +186,9 @@ def save_recommendations(user_id, output, daily_calories):
                                 )
                                 session.add(meal_plan_recipe)
                             else:
-                                meal_plan_recipe.recipe_id = recipe['recipeId']
                                 meal_plan_recipe.is_cook = False
                             session.commit()
             else:
-                # Handling existing meal plans, no action needed if no modifications are required
                 continue
         session.close()
 

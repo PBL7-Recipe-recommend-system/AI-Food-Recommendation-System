@@ -211,7 +211,7 @@ class Person:
                         recipes = [object_as_dict(r) for r in recipes]
                         
                         df = DataFrame(recipes)
-                        df = df.drop(columns=["keywords", "recipe_ingredients_quantities", "recipe_servings", "review_count"])
+                        df = df.drop(columns=["keywords", "recipe_ingredients_quantities", "recipe_servings", "review_count","author_name","description","date_published","recipe_category","aggregated_ratings"])
                         cleaned_data = output_recommended_recipes(df)
                         
                         daily_output[meal] = cleaned_data
