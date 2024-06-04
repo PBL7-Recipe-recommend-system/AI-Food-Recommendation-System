@@ -32,11 +32,11 @@ try:
 finally:
     cnx.close()
 
-columns_to_keep = ['recipe_id', 'name', 'cook_time', 'prep_time','images', 'total_time', 'recipe_ingredients_parts', 'calories', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content', 'recipe_instructions']
+columns_to_keep = ['recipe_id', 'name', 'cook_time', 'recipe_category','prep_time','images', 'total_time', 'recipe_ingredients_parts', 'calories', 'fat_content', 'saturated_fat_content', 'cholesterol_content', 'sodium_content', 'carbonhydrate_content', 'fiber_content', 'sugar_content', 'protein_content', 'recipe_instructions']
 dataset = pd.DataFrame(rows, columns=columns_to_keep)
 # dataset=pd.read_csv('../Data/updated_dataset.csv')
 
-
+dataset = dataset[dataset['recipe_category'] != 'Beverages']
 app = FastAPI()
 
 DATABASE_URL = f"mysql+pymysql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['db']}"
