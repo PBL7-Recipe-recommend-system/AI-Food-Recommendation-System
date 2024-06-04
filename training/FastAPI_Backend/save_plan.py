@@ -104,48 +104,6 @@ class FoodRecipe(Base):
 
 
 
-# def save_recommendations(user_id, output, daily_calories):
-#     engine = create_engine(DATABASE_URL)
-#     Session = sessionmaker(bind=engine, autoflush=False)
-
-#     try:
-#         for daily_output in output:
-#             date = datetime.strptime(daily_output['date'], '%d-%m-%Y').strftime('%Y-%m-%d')
-
-#             session = Session()
-#             meal_plan = session.query(RecommendMealPlan).filter_by(user_id=user_id, date=date).first()
-
-#             if meal_plan is None:
-#                 meal_plan = RecommendMealPlan(
-#                     user_id=user_id,
-#                     date=date,
-#                     daily_calorie=daily_calories,
-#                     description="Generated meal plan"
-#                 )
-#                 session.add(meal_plan)
-#                 session.commit()  
-
-#             for meal, recipes in daily_output.items():
-#                 if meal != 'date':
-#                     for recipe in recipes:
-#                         meal_plan_recipe = session.query(RecommendMealPlanRecipes).filter_by(recommend_meal_plan_id=meal_plan.recommend_meal_plan_id, meal_type=meal).first()
-
-#                         if meal_plan_recipe is None:
-#                             meal_plan_recipe = RecommendMealPlanRecipes(
-#                                 recommend_meal_plan_id=meal_plan.recommend_meal_plan_id,
-#                                 recipe_id=recipe['recipeId'], 
-#                                 meal_type=meal,
-#                                 is_cook=False
-#                             )
-#                             session.add(meal_plan_recipe)
-#                         else:
-#                             meal_plan_recipe.recipe_id = recipe['recipeId']
-#                             meal_plan_recipe.is_cook = False
-#                         session.commit()
-#             session.close()
-
-#     except SQLAlchemyError as e:
-#         print(f"Failed to save recommendations: {e}")
 
 def save_recommendations(user_id, output, daily_calories):
     engine = create_engine(DATABASE_URL)

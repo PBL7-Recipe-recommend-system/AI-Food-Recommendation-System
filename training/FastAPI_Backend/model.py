@@ -6,7 +6,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 import time
-import logging
 
 
 def scaling(dataframe):
