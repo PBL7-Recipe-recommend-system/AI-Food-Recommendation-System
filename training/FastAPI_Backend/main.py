@@ -185,6 +185,7 @@ class Person:
             if date not in existing_dates:
                 # Data is not available for this date, generate recommendations
                 daily_output = {'date': date.strftime('%d-%m-%Y'), 'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
+                recommended_dishes = set()  # Keep track of dishes that have already been recommended
                 for meal in self.mealsCaloriesPerc:
                     meal_calories = self.mealsCaloriesPerc[meal] * daily_calories
                     if meal == 'breakfast':        
@@ -195,7 +196,24 @@ class Person:
                         recommended_nutrition = [meal_calories, rnd(20,40), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,20), rnd(0,10), rnd(50,175)] 
                     else:  # Treat all other meals similarly to breakfast
                         recommended_nutrition = [meal_calories, rnd(10,30), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,10), rnd(0,10), rnd(30,100)]
-                    recommendation_dataframe = recommend(extracted_data, recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    hours_minutes = extracted_data['total_time'].str.extract('PT((\d+)H)?((\d+)M)?').fillna(0)
+
+                    # Convert extracted hours and minutes to integer
+                    hours_minutes[1] = hours_minutes[1].astype(int)
+                    hours_minutes[3] = hours_minutes[3].astype(int)
+
+                    # Calculate total cook time in minutes
+                    extracted_data['cook_time_minutes'] = hours_minutes[1]*60 + hours_minutes[3]
+                    
+                    # Generate recommendations excluding dishes that have already been recommended
+                    if meal == 'breakfast':
+                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & (extracted_data['cook_time_minutes'] <= 45)], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    else:
+                        recommendation_dataframe = recommend(extracted_data[~extracted_data['name'].isin(recommended_dishes)], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    
+                    # Add the recommended dishes to the set of dishes that have already been recommended
+                    recommended_dishes.update(recommendation_dataframe['name'].tolist())
+                    recommendation_dataframe.drop(columns=['cook_time_minutes'], inplace=True)
                     daily_output[meal] = output_recommended_recipes(recommendation_dataframe)
                 
                 output.append(daily_output)
