@@ -201,13 +201,19 @@ class Person:
                     # Convert extracted hours and minutes to integer
                     hours_minutes[1] = hours_minutes[1].astype(int)
                     hours_minutes[3] = hours_minutes[3].astype(int)
-
+                    
                     # Calculate total cook time in minutes
                     extracted_data['cook_time_minutes'] = hours_minutes[1]*60 + hours_minutes[3]
                     
                     # Generate recommendations excluding dishes that have already been recommended
                     if meal == 'breakfast':
-                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & (extracted_data['cook_time_minutes'] <= 45)], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & (extracted_data['cook_time_minutes'] <= 45) & (extracted_data['recipe_category'] == 'Breakfast')], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    elif meal == 'morningSnack':
+                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & ((extracted_data['recipe_category'] == '< 15 Mins') | (extracted_data['recipe_category'] == '< 30 Mins') | (extracted_data['recipe_category'] == 'Lunch/Snacks'))], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    elif meal == 'afternoonSnack':
+                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & ((extracted_data['recipe_category'] == '< 15 Mins') | (extracted_data['recipe_category'] == '< 30 Mins') | (extracted_data['recipe_category'] == 'Dessert'))], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
+                    elif meal == 'dinner':
+                        recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & (~extracted_data['recipe_category'].isin(['Dessert', 'Lunch/Snacks']))], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
                     else:
                         recommendation_dataframe = recommend(extracted_data[~extracted_data['name'].isin(recommended_dishes)], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
                     
