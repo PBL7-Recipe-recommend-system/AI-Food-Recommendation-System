@@ -171,12 +171,13 @@ class Person:
         
         # Fetch existing meal plans within the next 7 days
         meal_plans = session.query(RecommendMealPlan).filter(
+            RecommendMealPlan.user_id == self.user_id,
             RecommendMealPlan.date >= today,
             RecommendMealPlan.date <= seven_days_later
         ).order_by(RecommendMealPlan.date).all()
-
+        print(1)
         existing_dates = {meal_plan.date for meal_plan in meal_plans}  # Create a set of existing dates
-        
+        print(existing_dates)
         # Generate recommendations from today to 7 days later
         for i in range(8):  # Includes today and goes to 7 days later
             date = today + datetime.timedelta(days=i)
@@ -186,6 +187,7 @@ class Person:
                 # Data is not available for this date, generate recommendations
                 daily_output = {'date': date.strftime('%d-%m-%Y'), 'breakfast': [], 'lunch': [], 'dinner': [], 'morningSnack': [], 'afternoonSnack': []}
                 recommended_dishes = set()  # Keep track of dishes that have already been recommended
+                print(date)
                 for meal in self.mealsCaloriesPerc:
                     meal_calories = self.mealsCaloriesPerc[meal] * daily_calories
                     if meal == 'breakfast':        
