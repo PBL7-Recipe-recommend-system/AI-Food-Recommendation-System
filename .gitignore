@@ -13,3 +13,6 @@ training/Data/updated_dataset.csv
 training/Data/CrawlSWithSelenium.ipynb
 training/Data/recipe_links.csv
 training/Data/extracted_recipes.csv
+
+data/RAW_recipes.csv
+data/recipes_ingredients.csv
