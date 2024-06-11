@@ -52,6 +52,7 @@ class PersonIn(BaseModel):
     weightLoss: float
     includeIngredients: List[str] = Field(default_factory=list)
     excludeIngredients: List[str] = Field(default_factory=list)
+    condition: Optional[str] = None
 
 
 
@@ -154,9 +155,10 @@ class Person:
         else:
             return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories),"bmi":self.calculate_bmi(), "recommendations": output}}
         
-     
+    
 
-    def generate_recommendations2(self):
+
+    def generate_recommendations2(self, condition = None):
         weight_loss_factors = {1: 0.7, 2: 1.3, 3: 1}
         daily_calories = weight_loss_factors[self.weightLoss] * self.calories_calculator()
         output = []
@@ -178,6 +180,7 @@ class Person:
         
         existing_dates = {meal_plan.date for meal_plan in meal_plans}  # Create a set of existing dates
         
+
         # Generate recommendations from today to 7 days later
         for i in range(8):  # Includes today and goes to 7 days later
             date = today + datetime.timedelta(days=i)
@@ -190,15 +193,38 @@ class Person:
                 
                 for meal in self.mealsCaloriesPerc:
                     meal_calories = self.mealsCaloriesPerc[meal] * daily_calories
+                    # Define default values for nutritional limits
+                    sugar_limit = rnd(0, 10)
+                    carb_limit = rnd(40, 75)
+                    sodium_limit = rnd(0, 400)
+                    fat_limit = rnd(20, 40)  # Consider reducing overall fat for obesity
+                    fiber_limit = rnd(4, 10)  # Increasing fiber for heart health
+
+                    # Adjust limits based on specific health conditions
+                    if condition == 'diabetes':
+                        sugar_limit = rnd(0, 5)
+                        carb_limit = rnd(10, 25)
+                    elif condition == 'hypertension':
+                        sodium_limit = rnd(0, 200)
+                        fat_limit = rnd(5, 15)
+                    elif condition == 'heart_disease':
+                        fat_limit = rnd(5, 15)  # Lower fat, particularly saturated fat
+                        fiber_limit = rnd(10, 20)  # Higher fiber intake
+                    elif condition == 'obesity':
+                        meal_calories *= 0.8  # Reduce overall calorie intake
+                        fat_limit = rnd(10, 20)  # Lower total fat
+
                     if meal == 'breakfast':        
-                        recommended_nutrition = [meal_calories, rnd(10,30), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,10), rnd(0,10), rnd(30,100)]
+                        recommended_nutrition = [meal_calories, fat_limit, rnd(0,4), rnd(0,30), sodium_limit, carb_limit, fiber_limit, sugar_limit, rnd(30,100)]
                     elif meal == 'lunch':
-                        recommended_nutrition = [meal_calories, rnd(20,40), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,20), rnd(0,10), rnd(50,175)]
+                        recommended_nutrition = [meal_calories, fat_limit, rnd(0,4), rnd(0,30), sodium_limit, carb_limit, fiber_limit, sugar_limit, rnd(50,175)]
                     elif meal == 'dinner':
-                        recommended_nutrition = [meal_calories, rnd(20,40), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,20), rnd(0,10), rnd(50,175)] 
+                        recommended_nutrition = [meal_calories, fat_limit, rnd(0,4), rnd(0,30), sodium_limit, carb_limit, fiber_limit, sugar_limit, rnd(50,175)] 
                     else:  # Treat all other meals similarly to breakfast
-                        recommended_nutrition = [meal_calories, rnd(10,30), rnd(0,4), rnd(0,30), rnd(0,400), rnd(40,75), rnd(4,10), rnd(0,10), rnd(30,100)]
+                        recommended_nutrition = [meal_calories, fat_limit, rnd(0,4), rnd(0,30), sodium_limit, carb_limit, fiber_limit, sugar_limit, rnd(30,100)]
+
                     hours_minutes = extracted_data['total_time'].str.extract('PT((\d+)H)?((\d+)M)?').fillna(0)
+
 
                     # Convert extracted hours and minutes to integer
                     hours_minutes[1] = hours_minutes[1].astype(int)
@@ -218,7 +244,7 @@ class Person:
                         recommendation_dataframe = recommend(extracted_data[(~extracted_data['name'].isin(recommended_dishes)) & (~extracted_data['recipe_category'].isin(['Dessert', 'Lunch/Snacks']))], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
                     else:
                         recommendation_dataframe = recommend(extracted_data[~extracted_data['name'].isin(recommended_dishes)], recommended_nutrition,[],[], {'n_neighbors':5, 'return_distance':False})
-                    
+                        
                     # Add the recommended dishes to the set of dishes that have already been recommended
                     recommended_dishes.update(recommendation_dataframe['name'].tolist())
                     recommendation_dataframe.drop(columns=['cook_time_minutes'], inplace=True)
@@ -249,7 +275,7 @@ class Person:
         if not output:
             return {"statusCode": 401, "message": "No recommendations generated", "data": None}
         else:
-            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories), "bmi": self.calculate_bmi(), "recommendations": output}}    
+            return {"statusCode": 200, "message": "Recommendations generated successfully", "data": {"recommendCalories": round(daily_calories), "bmi": self.calculate_bmi(), "recommendations": output}} 
 
 
 
@@ -276,7 +302,7 @@ def recommendation(person: PersonIn,dayCount:int=1):
         excludeIngredients=person.excludeIngredients
     )
     
-    recommendations = person_obj.generate_recommendations2()
+    recommendations = person_obj.generate_recommendations2(person.condition)
 
     if recommendations is None:
         return None
