@@ -201,16 +201,16 @@ class Person:
                     fiber_limit = rnd(4, 10)  # Increasing fiber for heart health
 
                     # Adjust limits based on specific health conditions
-                    if condition == 'diabetes':
+                    if condition == "diabetes":
                         sugar_limit = rnd(0, 5)
                         carb_limit = rnd(10, 25)
-                    elif condition == 'hypertension':
+                    elif condition == "hypertension":
                         sodium_limit = rnd(0, 200)
                         fat_limit = rnd(5, 15)
-                    elif condition == 'heart_disease':
+                    elif condition == "heart disease":
                         fat_limit = rnd(5, 15)  # Lower fat, particularly saturated fat
                         fiber_limit = rnd(10, 20)  # Higher fiber intake
-                    elif condition == 'obesity':
+                    elif condition == "obesity":
                         meal_calories *= 0.8  # Reduce overall calorie intake
                         fat_limit = rnd(10, 20)  # Lower total fat
 
